@@ -220,7 +220,7 @@ def fastapi_server():
 
     try:
         process = subprocess.Popen(
-            ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"],
+            ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
