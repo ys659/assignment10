@@ -41,7 +41,7 @@ jobs:
           pip install -r requirements.txt
           pip install uvicorn[standard]
           pip install playwright pytest-playwright
-          playwright install chromium
+          python -m playwright install --with-deps chromium
 
       - name: Run unit tests
         run: pytest tests/unit/ -vv
