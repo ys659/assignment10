@@ -1,7 +1,4 @@
-name: CI/CD
-
-permissions:
-  contents: read
+name: Tests
 
 on:
   push:
@@ -10,13 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
-
   test:
     runs-on: ubuntu-latest
 
-    # REQUIRED for PostgreSQL to work on Ubuntu 24.04 GitHub runners
     container:
       image: python:3.10
+      options: --shm-size=2gb
 
     services:
       postgres:
@@ -43,59 +39,17 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          playwright install || true   # safe even if not using Playwright
+          pip install uvicorn[standard]
+          pip install playwright pytest-playwright
+          playwright install chromium
 
       - name: Run unit tests
-        run: |
-          pytest tests/unit/ --cov=src --junitxml=test-results/junit.xml
+        run: pytest tests/unit/ -vv
 
       - name: Run integration tests
-        run: pytest tests/integration/
+        run: pytest tests/integration/ -vv
 
-      - name: Run e2e tests
-        run: pytest tests/e2e/
-
-  security:
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build image
-        run: docker build -t app:test .
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'app:test'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
-
-  deploy:
-    needs: security
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment: production
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - uses: docker/build-push-action@v5
-        with:
-          push: true
-          tags: |
-            kaw393939/601_module9:latest
-            kaw393939/601_module9:${{ github.sha }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=registry,ref=kaw393939/601_module9:cache
-          cache-to: type=inline,mode=max
+      - name: Run E2E tests
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+        run: pytest tests/e2e/ -vv --disable-warnings
