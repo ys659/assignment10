@@ -4,6 +4,9 @@ https://hub.docker.com/r/ys659/assignment10
 # Testing
 pytest
 
+# Screenshots
+<img src="screenshot.png" width="80%">
+
 # 📦 Project Setup
 
 ---
